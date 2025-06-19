@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Ultrasonic Game</title>
+  </head>
+  <body>
+    <h1>Ultrasonic Distance Game</h1>
+
+    <div id="form-section">
+      <form id="form">
+        <input type="text" id="username" placeholder="Nama Pemain" required />
+        <button type="submit">Mulai</button>
+      </form>
+    </div>
+
+    <div id="game-section" style="display: none">
+      <p>Target Jarak: <span id="target"></span> cm</p>
+      <p>Hasil: <span id="result"></span> cm</p>
+      <p>Nyawa: <span id="life"></span></p>
+      <p>Poin: <span id="point"></span></p>
+      <div id="message"></div>
+      <button id="next-btn" onclick="nextRound()" style="display: none">
+        Lanjut
+      </button>
+    </div>
+
+    <script>
+      let userId = null;
+      let username = localStorage.getItem("username") || "";
+
+      async function getStatusAndUpdateUI() {
+        if (!username) return;
+
+        const res = await fetch(
+          "get_status.php?username=" + encodeURIComponent(username)
+        );
+        const data = await res.json();
+
+        userId = data.user_id;
+        document.getElementById("life").innerText = data.life;
+        document.getElementById("point").innerText = data.point;
+
+        if (data.status === "start") {
+          document.getElementById("form-section").style.display = "block";
+          document.getElementById("game-section").style.display = "none";
+        } else {
+          document.getElementById("form-section").style.display = "none";
+          document.getElementById("game-section").style.display = "block";
+
+          document.getElementById("target").innerText = data.target ?? "-";
+          document.getElementById("result").innerText = data.result ?? "-";
+          document.getElementById("message").innerText = data.message ?? "";
+
+          if (data.status === "result" && data.life <= 0) {
+            document.getElementById("message").innerText = "Game Over!";
+          }
+
+          document.getElementById("next-btn").style.display =
+            data.status === "result" ? "inline" : "none";
+        }
+      }
+
+      document.getElementById("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        username = document.getElementById("username").value;
+        localStorage.setItem("username", username); // Simpan agar tetap terbaca saat refresh
+
+        const res = await fetch("start.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "username=" + encodeURIComponent(username),
+        });
+
+        await res.json();
+        getStatusAndUpdateUI();
+      });
+
+      async function nextRound() {
+        const res = await fetch("next_round.php?user_id=" + userId);
+        const data = await res.json();
+        getStatusAndUpdateUI();
+      }
+
+      // Saat halaman pertama kali dibuka atau di-refresh
+      window.addEventListener("load", () => {
+        if (username) {
+          document.getElementById("form-section").style.display = "none";
+          getStatusAndUpdateUI();
+        }
+      });
+
+      // Update terus-menerus
+      setInterval(() => {
+        if (username) getStatusAndUpdateUI();
+      }, 2000);
+    </script>
+  </body>
+</html>
