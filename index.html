@@ -33,6 +33,19 @@
       <p>Poin: <span id="result-poin"></span></p>
       <div id="result-message"></div>
       <button id="next-btn" onclick="nextRound()">Lanjut</button>
+      <hr />
+      <h2>Leaderboard (Top 5)</h2>
+      <table border="1" id="leaderboard">
+        <thead>
+          <tr>
+            <th>Nama</th>
+            <th>Point</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <canvas id="pointChart" width="400" height="200"></canvas>
     </div>
 
     <script>
@@ -121,11 +134,69 @@
           getStatusAndUpdateUI();
         }
       });
-
+      updateLeaderboard(); // <- ini ditambahkan
       // Update terus-menerus
       setInterval(() => {
         if (username) getStatusAndUpdateUI();
       }, 1000);
+      // Ambil dan tampilkan leaderboard
+      // Fungsi untuk update leaderboard dan grafik point
+      async function updateLeaderboard() {
+        try {
+          const res = await fetch("leaderboard.php");
+          const data = await res.json(); // <-- deklarasi dulu baru bisa dipakai
+
+          console.log("Data leaderboard:", data); // <-- ini sekarang aman
+
+          // === Tabel Top 5 ===
+          const tbody = document.querySelector("#leaderboard tbody");
+          tbody.innerHTML = "";
+          data.top5.forEach((row) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${row.name}</td><td>${row.point}</td>`;
+            tbody.appendChild(tr);
+          });
+
+          // === Grafik Distribusi Poin ===
+          const ctx = document.getElementById("pointChart").getContext("2d");
+          const labels = data.point_groups.map((g) => `${g.point} poin`);
+          const counts = data.point_groups.map((g) => g.count);
+
+          if (window.pointChart instanceof Chart) {
+            window.pointChart.destroy();
+          }
+
+          window.pointChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Jumlah Pemain",
+                  data: counts,
+                  backgroundColor: "rgba(75, 192, 192, 0.5)",
+                  borderColor: "rgba(75, 192, 192, 1)",
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    stepSize: 1,
+                    precision: 0,
+                  },
+                },
+              },
+            },
+          });
+        } catch (err) {
+          console.error("Gagal ambil leaderboard:", err);
+        }
+      }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </body>
 </html>
