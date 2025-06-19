@@ -14,14 +14,25 @@
     </div>
 
     <div id="game-section" style="display: none">
+      <p>Username: <span id="username-display"></span></p>
       <p>Target Jarak: <span id="target"></span> cm</p>
-      <p>Hasil: <span id="result"></span> cm</p>
+      <!-- <p>Hasil: <span id="result"></span> cm</p> -->
       <p>Nyawa: <span id="life"></span></p>
       <p>Poin: <span id="point"></span></p>
-      <div id="message"></div>
-      <button id="next-btn" onclick="nextRound()" style="display: none">
+      <!-- <div id="message"></div> -->
+      <!-- <button id="next-btn" onclick="nextRound()" style="display: none">
         Lanjut
-      </button>
+      </button> -->
+    </div>
+
+    <div id="result-section" style="display: none">
+      <p>Username: <span id="username-display"></span></p>
+      <p>Target Jarak: <span id="result-target"></span> cm</p>
+      <p>Hasil: <span id="result-hasil"></span> cm</p>
+      <p>Nyawa: <span id="result-nyawa"></span></p>
+      <p>Poin: <span id="result-poin"></span></p>
+      <div id="result-message"></div>
+      <button id="next-btn" onclick="nextRound()">Lanjut</button>
     </div>
 
     <script>
@@ -43,20 +54,42 @@
         if (data.status === "start") {
           document.getElementById("form-section").style.display = "block";
           document.getElementById("game-section").style.display = "none";
-        } else {
+          document.getElementById("result-section").style.display = "none";
+        } else if (data.status === "playing") {
           document.getElementById("form-section").style.display = "none";
           document.getElementById("game-section").style.display = "block";
+          document.getElementById("result-section").style.display = "none";
 
+          document.getElementById("username-display").innerText = username;
           document.getElementById("target").innerText = data.target ?? "-";
-          document.getElementById("result").innerText = data.result ?? "-";
+          // document.getElementById("result").innerText = data.result ?? "-";
           document.getElementById("message").innerText = data.message ?? "";
 
-          if (data.status === "result" && data.life <= 0) {
+          // if (data.status === "result" && data.life <= 0) {
+          //   document.getElementById("message").innerText = "Game Over!";
+          // }
+
+          // document.getElementById("next-btn").style.display =
+          //   data.status === "result" ? "inline" : "none";
+        } else {
+          document.getElementById("form-section").style.display = "none";
+          document.getElementById("game-section").style.display = "none";
+          document.getElementById("result-section").style.display = "block";
+
+          document.getElementById("result-target").innerText =
+            data.target ?? "-";
+          document.getElementById("result-hasil").innerText =
+            data.result ?? "-";
+          document.getElementById("result-nyawa").innerText = data.life ?? "-";
+          document.getElementById("result-poin").innerText = data.point ?? "-";
+          document.getElementById("result-message").innerText =
+            data.message ?? "";
+
+          if (data.life <= 0) {
             document.getElementById("message").innerText = "Game Over!";
           }
 
-          document.getElementById("next-btn").style.display =
-            data.status === "result" ? "inline" : "none";
+          document.getElementById("next-btn").style.display = "inline";
         }
       }
 
@@ -92,7 +125,7 @@
       // Update terus-menerus
       setInterval(() => {
         if (username) getStatusAndUpdateUI();
-      }, 2000);
+      }, 1000);
     </script>
   </body>
 </html>
